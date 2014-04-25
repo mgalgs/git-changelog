@@ -2,6 +2,58 @@
 
 PROG=$0
 
+# skeleton:
+# <html>
+#   <head>
+#     <link rel="stylesheet" href="{{ STATIC_URL }}css/changelog.css">
+#     <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
+#   </head>
+#   <body>
+#     <div class="branding">
+#       <div class="page-title">
+#         HCF Shop Management Software Changelog
+#       </div>
+#       <div class="page-subtitle">2014-02-01 - 2014-04-24</div>
+#     </div>
+#     <div class="container_12">
+#       <div class="card">
+#       </div> <!-- /.card -->
+#     </div> <!-- /.container_12 -->
+#   </body>
+# </html>
+
+header()
+{
+    cat <<EOF
+<html>
+  <head>
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/changelog.css">
+    <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
+  </head>
+  <body>
+
+    <div class="branding">
+      <div class="page-title">
+        HCF Shop Management Software Changelog
+      </div>
+      <div class="page-subtitle">2014-02-01 - 2014-04-24</div>
+    </div>
+
+    <div class="container_12">
+      <div class="card">
+EOF
+}
+
+footer()
+{
+    cat <<EOF
+      </div> <!-- /.card -->
+    </div> <!-- /.container_12 -->
+  </body>
+</html>
+EOF
+}
+
 usage()
 {
     cat <<EOF
@@ -10,16 +62,17 @@ $(basename $PROG) gitrange gh_repo gh_token
 Example:
 ========
 
-$(basename $PROG) v1.2...v.1.3 mgalgs/somerepo abcdef01234
+$(basename $PROG) v1.2...v.1.3 "My cool project" mgalgs/somerepo abcdef01234
 
 EOF
 }
 
-[[ "$1" = "-h" || "$1" = "--help" || $# -ne 3 ]] && { usage; exit 1; }
+[[ "$1" = "-h" || "$1" = "--help" || $# -ne 4 ]] && { usage; exit 1; }
 
 range=$1
-gh_repo=$2
-gh_token=$3
+project_name="$2"
+gh_repo=$3
+gh_token=$4
 
 gh_commit_url_fmt="https://github.com/%s/commit/%s"
 gh_issues_url_fmt="https://github.com/%s/issues/%d"
@@ -58,6 +111,8 @@ render_entry()
 EOF
 }
 
+header
+
 while read sha1; do
     thedate=$(git log -1 $sha1 --date=short --pretty='%cd')
     thesubject=$(git log -1 $sha1 --pretty='%s')
@@ -72,3 +127,5 @@ while read sha1; do
 
     render_entry $gh_repo $sha1 "$thesubject" "$thedate" "$issue_num" "$issuetitle"
 done < <(git log $range --pretty="%H")
+
+footer
