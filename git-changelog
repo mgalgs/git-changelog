@@ -1,0 +1,74 @@
+#!/bin/bash
+
+PROG=$0
+
+usage()
+{
+    cat <<EOF
+$(basename $PROG) gitrange gh_repo gh_token
+
+Example:
+========
+
+$(basename $PROG) v1.2...v.1.3 mgalgs/somerepo abcdef01234
+
+EOF
+}
+
+[[ "$1" = "-h" || "$1" = "--help" || $# -ne 3 ]] && { usage; exit 1; }
+
+range=$1
+gh_repo=$2
+gh_token=$3
+
+gh_commit_url_fmt="https://github.com/%s/commit/%s"
+gh_issues_url_fmt="https://github.com/%s/issues/%d"
+gh_issues_api_fmt="https://api.github.com/repos/%s/issues/%d?access_token=%s"
+
+render_entry()
+{
+    local repo=$1
+    local commitsha1=$2
+    local subject="$3"
+    local thedate="$4"
+    local issuenum="$5"
+    local issuetitle="$6"
+    local fixesbr
+    local issuebtn
+    [[ -n "$issuetitle" ]] && {
+        fixesbr="<br>"
+        issuebtn="<a title=\"$issuetitle\" class=\"btn gh-fixes\" href=\"https://github.com/$repo/issues/$issuenum\">view issue</a>"
+    }
+    cat <<EOF
+<div class="changelog-entry">
+  <div class="grid_3">
+    <div class="grid_1-5">
+      <a title="$subject" class="btn commit" href="https://github.com/$repo/issues/$commit">view commit</a>
+    </div>
+    <div class="grid_1-5">
+      $issuebtn
+    </div>
+  </div>
+  <div class="grid_8">
+    <span class="gh-fixes-text">$issuetitle</span>$fixesbr
+    <span class="commit-text">$subject <i>($thedate)</i></span>
+  </div>
+  <div class="clear"></div>
+</div>
+EOF
+}
+
+while read sha1; do
+    thedate=$(git log -1 $sha1 --date=short --pretty='%cd')
+    thesubject=$(git log -1 $sha1 --pretty='%s')
+    theurl=$(printf $gh_commit_url_fmt $gh_repo $sha1)
+    gh_fixes=$(git log -1 $sha1 | grep -e '^    Fixes #[[:digit:]]\+$')
+    [[ -n "$gh_fixes" ]] && {
+        issue_num=${gh_fixes##*Fixes \#}
+        issuetitle=$(curl -s $(printf $gh_issues_api_fmt "$gh_repo" $issue_num $gh_token) | jshon -e title | sed 's/"\(.*\)"/\1/g' | sed 's/\\"/"/g')
+        # gh_fixes="<a class=\"gh-fixes\" href=\"$(printf $gh_issues_url_fmt $gh_repo $issue_num)\">${gh_fixes:4}: $title</a>"
+    }
+    # echo "  <li><a class=\"commit\" href=\"$theurl\">view commit</a> &mdash; $thesubject $gh_fixes</li>"
+
+    render_entry $gh_repo $sha1 "$thesubject" "$thedate" "$issue_num" "$issuetitle"
+done < <(git log $range --pretty="%H")
