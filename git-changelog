@@ -27,7 +27,9 @@ header()
     cat <<EOF
 <html>
   <head>
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/changelog.css">
+    <style>
+      $(tr '\n' ' ' < $(dirname $PROG)/changelog.css)
+    </style>
     <link href='http://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
   </head>
   <body>
@@ -93,21 +95,21 @@ render_entry()
         issuebtn="<a title=\"$issuetitle\" class=\"btn gh-fixes\" href=\"https://github.com/$repo/issues/$issuenum\">view issue</a>"
     }
     cat <<EOF
-<div class="changelog-entry">
-  <div class="grid_3">
-    <div class="grid_1-5">
-      <a title="$subject" class="btn commit" href="https://github.com/$repo/issues/$commit">view commit</a>
-    </div>
-    <div class="grid_1-5">
-      $issuebtn
-    </div>
-  </div>
-  <div class="grid_8">
-    <span class="gh-fixes-text">$issuetitle</span>$fixesbr
-    <span class="commit-text">$subject <i>($thedate)</i></span>
-  </div>
-  <div class="clear"></div>
-</div>
+        <div class="changelog-entry">
+          <div class="grid_3">
+            <div class="grid_1-5">
+              <a title="$subject" class="btn commit" href="https://github.com/$repo/commit/$commitsha1">view commit</a>
+            </div>
+            <div class="grid_1-5">
+              $issuebtn
+            </div>
+          </div>
+          <div class="grid_8">
+            <span class="gh-fixes-text">$issuetitle</span>$fixesbr
+            <span class="commit-text">$subject <i>($thedate)</i></span>
+          </div>
+          <div class="clear"></div>
+        </div>
 EOF
 }
 
