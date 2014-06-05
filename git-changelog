@@ -125,12 +125,11 @@ while read sha1; do
     thesubject=$(git log -1 $sha1 --pretty='%s')
     theurl=$(printf $gh_commit_url_fmt $gh_repo $sha1)
     gh_fixes=$(git log -1 $sha1 | grep -e '^    Fixes #[[:digit:]]\+$')
+    issuetitle=
     [[ -n "$gh_fixes" ]] && {
         issue_num=${gh_fixes##*Fixes \#}
-        issuetitle=$(curl -s $(printf $gh_issues_api_fmt "$gh_repo" $issue_num $gh_token) | jshon -e title | sed 's/"\(.*\)"/\1/g' | sed 's/\\"/"/g')
-        # gh_fixes="<a class=\"gh-fixes\" href=\"$(printf $gh_issues_url_fmt $gh_repo $issue_num)\">${gh_fixes:4}: $title</a>"
+        issuetitle=$(curl -s $(printf $gh_issues_api_fmt "$gh_repo" $issue_num $gh_token) | jshon -e title | sed 's/"\(.*\)"/\1/g' | sed 's/\\"/"/g' | sed 's|\\/|/|g')
     }
-    # echo "  <li><a class=\"commit\" href=\"$theurl\">view commit</a> &mdash; $thesubject $gh_fixes</li>"
 
     render_entry $gh_repo $sha1 "$thesubject" "$thedate" "$issue_num" "$issuetitle"
 done < <(git log $range --pretty="%H")
