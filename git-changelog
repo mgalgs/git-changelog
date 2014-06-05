@@ -90,17 +90,19 @@ render_entry()
     local thedate="$4"
     local issuenum="$5"
     local issuetitle="$6"
+    local issuetitlesafe=$(sed "s/\"/\&quot;/g" <<<"$issuetitle")
+    local subjectsafe=$(sed "s/\"/\&quot;/g" <<<"$subject")
     local fixesbr
     local issuebtn
     [[ -n "$issuetitle" ]] && {
         fixesbr="<br>"
-        issuebtn="<a title=\"$issuetitle\" class=\"btn gh-fixes\" href=\"https://github.com/$repo/issues/$issuenum\">view issue</a>"
+        issuebtn="<a title=\"$issuetitlesafe\" class=\"btn gh-fixes\" href=\"https://github.com/$repo/issues/$issuenum\">view issue</a>"
     }
     cat <<EOF
         <div class="changelog-entry">
           <div class="grid_3">
             <div class="grid_1-5">
-              <a title="$subject" class="btn commit" href="https://github.com/$repo/commit/$commitsha1">view commit</a>
+              <a title="$subjectsafe" class="btn commit" href="https://github.com/$repo/commit/$commitsha1">view commit</a>
             </div>
             <div class="grid_1-5">
               $issuebtn
