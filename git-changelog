@@ -61,7 +61,7 @@ EOF
 usage()
 {
     cat <<EOF
-$(basename $PROG) gitrange gh_repo gh_token
+$(basename $PROG) gitrange project_name gh_repo gh_token
 
 Example:
 ========
