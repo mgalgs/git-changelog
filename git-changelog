@@ -90,8 +90,9 @@ render_entry()
     local thedate="$4"
     local issuenum="$5"
     local issuetitle="$6"
-    local issuetitlesafe=$(sed "s/\"/\&quot;/g" <<<"$issuetitle")
-    local subjectsafe=$(sed "s/\"/\&quot;/g" <<<"$subject")
+    local theauthor="$7"
+    local issuetitlesafe=$(sed "s/\"/\&quot;/g" <<<"$issuetitle" | sed "s/</\&lt;/g" | sed "s/>/\&gt;/g")
+    local subjectsafe=$(sed "s/\"/\&quot;/g" <<<"$subject" | sed "s/</\&lt;/g" | sed "s/>/\&gt;/g")
     local fixesbr
     local issuebtn
     [[ -n "$issuetitle" ]] && {
@@ -110,7 +111,7 @@ render_entry()
           </div>
           <div class="grid_8">
             <span class="gh-fixes-text">$issuetitle</span>$fixesbr
-            <span class="commit-text">$subject <i>($thedate)</i></span>
+            <span class="commit-text">$subjectsafe <i>($theauthor, $thedate)</i></span>
           </div>
           <div class="clear"></div>
         </div>
@@ -123,6 +124,7 @@ header ${thedates[@]:(-1)} ${thedates[0]}
 while read sha1; do
     thedate=$(git log -1 $sha1 --date=short --pretty='%cd')
     thesubject=$(git log -1 $sha1 --pretty='%s')
+    theauthor=$(git log -1 $sha1 --pretty='%an' | cut -d' ' -f1)
     theurl=$(printf $gh_commit_url_fmt $gh_repo $sha1)
     gh_fixes=$(git log -1 $sha1 | grep -e '^    Fixes #[[:digit:]]\+$')
     issuetitle=
@@ -131,7 +133,7 @@ while read sha1; do
         issuetitle=$(curl -s $(printf $gh_issues_api_fmt "$gh_repo" $issue_num $gh_token) | jshon -e title | sed 's/"\(.*\)"/\1/g' | sed 's/\\"/"/g' | sed 's|\\/|/|g')
     }
 
-    render_entry $gh_repo $sha1 "$thesubject" "$thedate" "$issue_num" "$issuetitle"
-done < <(git log $range --pretty="%H")
+    render_entry $gh_repo $sha1 "$thesubject" "$thedate" "$issue_num" "$issuetitle" "$theauthor"
+done < <(git log $range --no-merges --pretty="%H")
 
 footer
